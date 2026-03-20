@@ -1,0 +1,5 @@
+{
+  "name": "English Learning Assistant",
+  "description": "An AI-powered English learning companion for conversational practice, grammar correction, and vocabulary building.",
+  "requestFramePermissions": ["microphone"]
+}

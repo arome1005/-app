@@ -1,0 +1,126 @@
+{
+  "entities": {
+    "Message": {
+      "title": "Message",
+      "description": "A single chat message in a conversation",
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["user", "model"],
+          "description": "The sender of the message"
+        },
+        "text": {
+          "type": "string",
+          "description": "The content of the message"
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "When the message was sent"
+        },
+        "uid": {
+          "type": "string",
+          "description": "The user ID of the owner"
+        },
+        "module": {
+          "type": "string",
+          "enum": ["chat", "listen", "speak", "read", "write"],
+          "description": "The learning module this message belongs to"
+        }
+      },
+      "required": ["role", "text", "timestamp", "uid", "module"]
+    },
+    "SavedWord": {
+      "title": "SavedWord",
+      "description": "A word saved to the user's word bank",
+      "type": "object",
+      "properties": {
+        "word": {
+          "type": "string",
+          "description": "The word itself"
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "When the word was saved"
+        },
+        "uid": {
+          "type": "string",
+          "description": "The user ID of the owner"
+        },
+        "mastery": {
+          "type": "number",
+          "description": "Mastery level (0-100)"
+        }
+      },
+      "required": ["word", "timestamp", "uid"]
+    },
+    "VocabularyProgress": {
+      "title": "VocabularyProgress",
+      "description": "User progress for a specific word",
+      "type": "object",
+      "properties": {
+        "word": { "type": "string" },
+        "meaning": { "type": "string" },
+        "phonetic": { "type": "string" },
+        "knownCount": { "type": "number" },
+        "lastReview": { "type": "number" },
+        "nextReview": { "type": "number" },
+        "status": { "type": "string", "enum": ["learning", "mastered", "forgotten", "vague"] },
+        "uid": { "type": "string" },
+        "sentences": { 
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "en": { "type": "string" },
+              "zh": { "type": "string" }
+            }
+          }
+        },
+        "mnemonic": { "type": "string" },
+        "extended": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "word": { "type": "string" },
+              "type": { "type": "string" },
+              "meaning": { "type": "string" }
+            }
+          }
+        }
+      },
+      "required": ["word", "meaning", "phonetic", "knownCount", "lastReview", "nextReview", "status", "uid"]
+    },
+    "CheckIn": {
+      "title": "CheckIn",
+      "description": "A daily check-in record for a user",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "date": { "type": "string", "description": "YYYY-MM-DD" },
+        "wordCount": { "type": "number" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["uid", "date", "wordCount", "timestamp"]
+    }
+  },
+  "firestore": {
+    "messages": {
+      "schema": "Message",
+      "description": "Collection of all chat messages"
+    },
+    "wordBank": {
+      "schema": "SavedWord",
+      "description": "Collection of saved words for each user"
+    },
+    "vocabularyProgress": {
+      "schema": "VocabularyProgress",
+      "description": "User progress for vocabulary memorization"
+    },
+    "checkIns": {
+      "schema": "CheckIn",
+      "description": "Daily check-in records for users"
+    }
+  }
+}
