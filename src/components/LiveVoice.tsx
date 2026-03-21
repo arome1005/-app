@@ -31,7 +31,7 @@ export default function LiveVoice({ onClose, onTranscript }: LiveVoiceProps) {
       
       // 2. Connect to Live API
       const session = await ai.live.connect({
-        model: "gemini-2.5-flash-native-audio-preview-09-2025",
+        model: "gemini-2.5-flash-native-audio-preview-12-2025",
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
@@ -45,6 +45,9 @@ export default function LiveVoice({ onClose, onTranscript }: LiveVoiceProps) {
           onopen: () => {
             setIsActive(true);
             setIsConnecting(false);
+            if (audioContextRef.current?.state === 'suspended') {
+              audioContextRef.current.resume();
+            }
             startMic();
           },
           onmessage: async (message: LiveServerMessage) => {
@@ -117,15 +120,24 @@ export default function LiveVoice({ onClose, onTranscript }: LiveVoiceProps) {
         // Convert to base64
         const base64Data = btoa(String.fromCharCode(...new Uint8Array(pcmData.buffer)));
         sessionRef.current.sendRealtimeInput({
-          media: { data: base64Data, mimeType: 'audio/pcm;rate=16000' }
+          audio: { data: base64Data, mimeType: 'audio/pcm;rate=16000' }
         });
       };
 
       source.connect(processor);
       processor.connect(audioContextRef.current!.destination);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Mic error:", err);
-      setError("Could not access microphone.");
+      setIsActive(false);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError("Microphone permission denied. Please enable it in your browser settings.");
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setError("No microphone found. Please connect a microphone and try again.");
+      } else if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        setError("Microphone access requires a secure connection (HTTPS or localhost).");
+      } else {
+        setError("Could not access microphone. Please check your hardware and permissions.");
+      }
     }
   };
 
@@ -239,8 +251,20 @@ export default function LiveVoice({ onClose, onTranscript }: LiveVoiceProps) {
           </div>
 
           {error && (
-            <div className="bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 p-3 rounded-xl text-sm w-full border border-red-100 dark:border-red-500/20">
-              {error}
+            <div className="space-y-4 w-full">
+              <div className="bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 p-3 rounded-xl text-sm border border-red-100 dark:border-red-500/20">
+                {error}
+              </div>
+              <button 
+                onClick={() => {
+                  setError(null);
+                  setIsConnecting(true);
+                  startSession();
+                }}
+                className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 dark:shadow-indigo-900/20"
+              >
+                Retry Connection
+              </button>
             </div>
           )}
 
