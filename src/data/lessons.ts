@@ -1,9 +1,13 @@
 export interface Lesson {
   id: number;
   title: string;
+  chineseTitle?: string;
+  question?: string;
+  chineseQuestion?: string;
   text?: string;
   vocabulary: { word: string; phonetic: string; meaning: string }[];
   exercise?: string;
+  audioUrl?: string;
 }
 
 export const NCE1_LESSONS: Lesson[] = [
@@ -1690,7 +1694,11 @@ export const NCE1_LESSONS: Lesson[] = [
   {
     id: 123,
     title: "A trip to Australia",
-    text: "A: I'm going to Australia next month.\nB: How long are you going to stay there?\nA: I'm going to stay there for three weeks.\nB: Are you going to visit Sydney?\nA: Yes, I am. I'm going to stay with some friends there.",
+    chineseTitle: "澳大利亚之行",
+    question: "Who is the man with the beard?",
+    chineseQuestion: "那个长着络腮胡子的人是谁？",
+    text: "MIKE: Look, Scott. This is a photograph I took during my trip to Australia.\nSCOTT: Let me see it, Mike.\nSCOTT: This is a good photograph. Who are these people?\nMIKE: They're people I met during the trip.\nMIKE: That's the ship we travelled on.\nSCOTT: What a beautiful ship!\nSCOTT: Who's this?\nMIKE: That's the man I told you about. Remember?\nSCOTT: Ah yes. The one who offered you a job in Australia.\nMIKE: That's right.\nSCOTT: Who's this?\nMIKE: Guess!\nSCOTT: It's not you, is it?\nMIKE: That's right.\nMIKE: I grew a beard during the trip, but I shaved it off when I came home.\nSCOTT: Why did you shave it off?\nMIKE: My wife didn't like it!",
+    audioUrl: "https://raw.githubusercontent.com/SeleneStar/New_concept_English/master/%E8%8B%B1%E9%9F%B3/%E6%96%B0%E6%A6%82%E5%BF%B5%E8%8B%B1%E8%AF%AD%E7%AC%AC1%E5%86%8CMP3(%E8%8B%B1%E9%9F%B3%2BLRC%EF%BC%89/123.mp3",
     vocabulary: [
       { word: "during", phonetic: "/'djʊərɪŋ/", meaning: "prep. 在……期间" },
       { word: "trip", phonetic: "/trɪp/", meaning: "n. 旅行" },

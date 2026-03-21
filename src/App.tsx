@@ -18,6 +18,8 @@ import {
   MessageSquare,
   Zap,
   PlayCircle,
+  Play,
+  Pause,
   RotateCcw,
   BookMarked,
   Star,
@@ -264,6 +266,30 @@ export default function App() {
       setWriteFeedback("");
     }
   }, [selectedLesson]);
+
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const lessonAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const toggleAudio = () => {
+    if (!readLesson.audioUrl) return;
+    
+    if (!lessonAudioRef.current) {
+      lessonAudioRef.current = new Audio(readLesson.audioUrl);
+      lessonAudioRef.current.onended = () => setIsAudioPlaying(false);
+    } else if (lessonAudioRef.current.src !== readLesson.audioUrl) {
+      lessonAudioRef.current.pause();
+      lessonAudioRef.current = new Audio(readLesson.audioUrl);
+      lessonAudioRef.current.onended = () => setIsAudioPlaying(false);
+    }
+
+    if (isAudioPlaying) {
+      lessonAudioRef.current.pause();
+      setIsAudioPlaying(false);
+    } else {
+      lessonAudioRef.current.play();
+      setIsAudioPlaying(true);
+    }
+  };
 
   const [showSettings, setShowSettings] = useState(false);
   const [configView, setConfigView] = useState<'gemini' | 'ollama' | 'learning'>('gemini');
@@ -947,7 +973,7 @@ export default function App() {
                 displayName: 'Local Learner',
                 email: 'local@example.com',
                 photoURL: 'https://api.dicebear.com/7.x/avataaars/svg?seed=local'
-              });
+              } as any);
             }}
             className="w-full py-3 bg-zinc-100 text-zinc-600 rounded-2xl font-bold text-sm hover:bg-zinc-200 transition-all border border-zinc-200"
           >
@@ -1637,55 +1663,144 @@ export default function App() {
               </div>
             </div>
           ) : activeModule === 'read' ? (
-            <div className="max-w-4xl mx-auto p-8 space-y-8">
-              <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-8">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-gray-900 text-xl">Reading Comprehension</h3>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => {
-                        const currentIndex = NCE1_LESSONS.findIndex(l => l.id === readLesson.id);
-                        const nextIndex = (currentIndex + 1) % NCE1_LESSONS.length;
-                        setSelectedLesson(NCE1_LESSONS[nextIndex]);
-                      }}
-                      className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-full transition-all"
-                    >
-                      Next Lesson
-                    </button>
+            <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
+              <div className="bg-white p-6 md:p-12 rounded-[2rem] border border-gray-100 shadow-xl space-y-10 font-serif relative overflow-hidden">
+                {/* Decorative background element */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl pointer-events-none" />
+                
+                {/* Book Header */}
+                <div className="border-b-2 border-zinc-100 pb-8 relative">
+                  <div className="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-6">
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-4xl font-black text-indigo-600">Lesson {readLesson.id}</span>
+                      <h3 className="text-3xl font-bold text-zinc-900 tracking-tight">{readLesson.title}</h3>
+                    </div>
+                    {readLesson.chineseTitle && (
+                      <span className="text-2xl text-zinc-400 font-medium">{readLesson.chineseTitle}</span>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center font-bold">
-                      {readLesson.id}
+                {/* Audio & Question Section */}
+                <div className="group flex flex-col md:flex-row gap-6 items-center md:items-start bg-zinc-50 p-8 rounded-[1.5rem] border border-zinc-100 hover:border-indigo-200 transition-all duration-300">
+                  <button 
+                    onClick={toggleAudio}
+                    className={cn(
+                      "w-20 h-20 rounded-2xl flex items-center justify-center transition-all shadow-lg shrink-0 transform group-hover:scale-105 active:scale-95",
+                      isAudioPlaying ? "bg-red-500 text-white animate-pulse" : "bg-zinc-900 text-white hover:bg-indigo-600"
+                    )}
+                  >
+                    {isAudioPlaying ? <Pause size={40} fill="currentColor" /> : <Play size={40} fill="currentColor" className="ml-1" />}
+                  </button>
+                  <div className="space-y-3 text-center md:text-left">
+                    <div className="flex items-center gap-2 justify-center md:justify-start text-indigo-600">
+                      <Headphones size={18} />
+                      <p className="text-sm font-bold uppercase tracking-widest">Listen & Answer</p>
                     </div>
-                    <h4 className="text-2xl font-black text-gray-900">{readLesson.title}</h4>
+                    <p className="text-zinc-600 font-medium italic text-lg">Listen to the tape then answer this question.</p>
+                    {readLesson.question && (
+                      <div className="space-y-1">
+                        <p className="text-2xl font-bold text-zinc-900 leading-tight">{readLesson.question}</p>
+                        {readLesson.chineseQuestion && (
+                          <p className="text-lg text-zinc-400 font-medium">{readLesson.chineseQuestion}</p>
+                        )}
+                      </div>
+                    )}
                   </div>
+                </div>
 
-                  <div className="p-8 bg-gray-50 rounded-3xl border border-gray-100 leading-relaxed text-xl text-gray-700 font-medium">
-                    {readLesson.text.split(' ').map((word, i) => (
-                      <span 
+                {/* Dialogue Section */}
+                <div className="space-y-8 text-2xl leading-[1.6] py-4">
+                  {readLesson.text.split('\n').map((line, i) => {
+                    const parts = line.split(': ');
+                    if (parts.length > 1) {
+                      return (
+                        <div key={i} className="flex flex-col md:flex-row gap-2 md:gap-6 group">
+                          <span className="w-32 font-black text-indigo-900 shrink-0 uppercase tracking-tighter text-lg md:text-right pt-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                            {parts[0]}
+                          </span>
+                          <div className="flex-1 text-zinc-800 font-medium">
+                            {parts[1].split(' ').map((word, j) => (
+                              <span 
+                                key={j} 
+                                onClick={() => handleWordClick(word)}
+                                className="inline-block cursor-pointer hover:text-indigo-600 hover:bg-indigo-50 px-1 rounded-md transition-all duration-200"
+                              >
+                                {word}{' '}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <p key={i} className="text-zinc-700 md:pl-38 font-medium italic border-l-4 border-indigo-100 pl-4">
+                        {line.split(' ').map((word, j) => (
+                          <span 
+                            key={j} 
+                            onClick={() => handleWordClick(word)}
+                            className="inline-block cursor-pointer hover:text-indigo-600 hover:bg-indigo-50 px-1 rounded-md transition-all duration-200"
+                          >
+                            {word}{' '}
+                          </span>
+                        ))}
+                      </p>
+                    );
+                  })}
+                </div>
+
+                {/* Vocabulary Section */}
+                <div className="pt-12 border-t-2 border-zinc-50">
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center">
+                      <BookOpen size={18} />
+                    </div>
+                    <h5 className="text-sm font-black text-zinc-400 uppercase tracking-[0.3em]">New Words & Expressions</h5>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {readLesson.vocabulary.map((v, i) => (
+                      <motion.div 
                         key={i} 
-                        onClick={() => handleWordClick(word)}
-                        className="cursor-pointer hover:text-indigo-600 hover:bg-indigo-50 px-0.5 rounded transition-all"
+                        whileHover={{ y: -4 }}
+                        onClick={() => playSpeech(v.word)}
+                        className="flex flex-col p-5 bg-white rounded-2xl border border-zinc-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group"
                       >
-                        {word}{' '}
-                      </span>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xl font-bold text-zinc-900 group-hover:text-indigo-600 transition-colors">{v.word}</span>
+                          <Volume2 size={16} className="text-zinc-300 group-hover:text-indigo-400 transition-colors" />
+                        </div>
+                        <span className="text-sm text-indigo-400 font-mono font-medium mb-2">{v.phonetic}</span>
+                        <span className="text-sm text-zinc-500 leading-relaxed">{v.meaning}</span>
+                      </motion.div>
                     ))}
                   </div>
-
-                  <div className="p-6 bg-indigo-50 rounded-2xl border border-indigo-100 space-y-4">
-                    <h5 className="text-sm font-bold text-indigo-900 uppercase tracking-widest">Vocabulary Focus</h5>
-                    <div className="flex flex-wrap gap-2">
-                      {readLesson.vocabulary.map((v, i) => (
-                        <div key={i} className="px-3 py-1.5 bg-white rounded-xl border border-indigo-100 text-sm font-bold text-indigo-600">
-                          {v.word}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 </div>
+              </div>
+              
+              {/* Navigation Controls */}
+              <div className="flex justify-between items-center px-4">
+                <button 
+                  onClick={() => {
+                    const currentIndex = NCE1_LESSONS.findIndex(l => l.id === readLesson.id);
+                    const prevIndex = (currentIndex - 1 + NCE1_LESSONS.length) % NCE1_LESSONS.length;
+                    setSelectedLesson(NCE1_LESSONS[prevIndex]);
+                  }}
+                  className="flex items-center gap-2 text-sm font-bold text-zinc-500 hover:text-indigo-600 transition-colors"
+                >
+                  <RotateCcw size={16} className="rotate-180" />
+                  Previous Lesson
+                </button>
+                <button 
+                  onClick={() => {
+                    const currentIndex = NCE1_LESSONS.findIndex(l => l.id === readLesson.id);
+                    const nextIndex = (currentIndex + 1) % NCE1_LESSONS.length;
+                    setSelectedLesson(NCE1_LESSONS[nextIndex]);
+                  }}
+                  className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-full font-bold shadow-lg hover:bg-indigo-700 hover:scale-105 transition-all"
+                >
+                  Next Lesson
+                  <ChevronRight size={18} />
+                </button>
               </div>
             </div>
           ) : activeModule === 'write' ? (
