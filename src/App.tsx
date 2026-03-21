@@ -242,6 +242,29 @@ export default function App() {
   const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>(() => localStorage.getItem('buddy_voice_uri') || '');
   const [isJarvisMode, setIsJarvisMode] = useState(() => localStorage.getItem('buddy_jarvis_mode') === 'true');
   const [useClonedVoice, setUseClonedVoice] = useState(() => localStorage.getItem('buddy_use_cloned_voice') === 'true');
+  
+  // Synchronize module-specific states with selectedLesson
+  useEffect(() => {
+    if (selectedLesson) {
+      setReadLesson(selectedLesson);
+      
+      // For listening and speaking, pick the first sentence or a representative part
+      const sentences = selectedLesson.text.split(/[.!?]/).filter(s => s.trim().length > 0);
+      const firstSentence = (sentences[0]?.trim() || selectedLesson.text) + '.';
+      setListenTarget(firstSentence);
+      setSpeakTarget(firstSentence);
+      
+      // For writing, create a prompt based on the lesson
+      setWritePrompt(`Write a short summary or your thoughts about Lesson ${selectedLesson.id}: ${selectedLesson.title}. Try to use some vocabulary from this lesson.`);
+      
+      // Reset inputs and results
+      setListenInput("");
+      setListenResult(null);
+      setWriteInput("");
+      setWriteFeedback("");
+    }
+  }, [selectedLesson]);
+
   const [showSettings, setShowSettings] = useState(false);
   const [configView, setConfigView] = useState<'gemini' | 'ollama' | 'learning'>('gemini');
   const [llmConfig, setLlmConfig] = useState<LLMConfig>(() => {
@@ -1623,7 +1646,7 @@ export default function App() {
                       onClick={() => {
                         const currentIndex = NCE1_LESSONS.findIndex(l => l.id === readLesson.id);
                         const nextIndex = (currentIndex + 1) % NCE1_LESSONS.length;
-                        setReadLesson(NCE1_LESSONS[nextIndex]);
+                        setSelectedLesson(NCE1_LESSONS[nextIndex]);
                       }}
                       className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-full transition-all"
                     >
